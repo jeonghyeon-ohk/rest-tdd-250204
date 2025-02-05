@@ -101,15 +101,8 @@ public class ApiV1MemberControllerTest {
 
     }
 
-    @Test
-    @DisplayName("로그인 - 성공")
-    void login() throws Exception {
-
-        String username = "user1";
-        String password = "user11234";
-
-        // 요청
-        ResultActions resultActions = mvc
+    private ResultActions loginRequest(String username, String password) throws Exception {
+        return mvc
                 .perform(
                         post("/api/v1/members/login")
                                 .content("""
@@ -125,6 +118,17 @@ public class ApiV1MemberControllerTest {
                                 )
                 )
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그인 - 성공")
+    void login1() throws Exception {
+
+        String username = "user1";
+        String password = "user11234";
+
+        // 요청
+        ResultActions resultActions = loginRequest(username, password);
 
         Member member = memberService.findByUsername(username).get();
 
@@ -152,22 +156,7 @@ public class ApiV1MemberControllerTest {
         String username = "user1";
         String password = "1234";
         // 요청
-        ResultActions resultActions = mvc
-                .perform(
-                        post("/api/v1/members/login")
-                                .content("""
-                                        {
-                                            "username": "%s",
-                                            "password": "%s"
-                                        }
-                                        """
-                                        .formatted(username, password)
-                                        .stripIndent())
-                                .contentType(
-                                        new MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)
-                                )
-                )
-                .andDo(print());
+        ResultActions resultActions = loginRequest(username, password);
         // 응답. (요청 처리 결과)
         resultActions
                 .andExpect(status().isUnauthorized()) // 401
