@@ -20,12 +20,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Transactional
-class ApiV1MemberControllerTest {
+public class ApiV1MemberControllerTest {
 
     @Autowired
     private MockMvc mvc;
@@ -42,7 +43,7 @@ class ApiV1MemberControllerTest {
                         post("/api/v1/members/join")
                                 .content("""
                                         {
-                                            "username": "user1",
+                                            "username": "userNew",
                                             "password": "1234",
                                             "nickname": "무명"
                                         }
@@ -53,10 +54,9 @@ class ApiV1MemberControllerTest {
                 )
                 .andDo(print());
 
-        Member member = memberService.findByUsername("user1").get();
+        Member member = memberService.findByUsername("userNew").get();
 
         assertThat(member.getNickname()).isEqualTo("무명");
-
 
         resultActions
                 .andExpect(status().isCreated())
@@ -92,13 +92,8 @@ class ApiV1MemberControllerTest {
                 )
                 .andDo(print());
 
-        Member member = memberService.findByUsername("user1").get();
-
-        assertThat(member.getNickname()).isEqualTo("무명");
-
-
         resultActions
-                .andExpect(status().isConflict()) // 409
+                .andExpect(status().isConflict())
                 .andExpect(handler().handlerType(ApiV1MemberController.class))
                 .andExpect(handler().methodName("join"))
                 .andExpect(jsonPath("$.code").value("409-1"))
@@ -110,34 +105,43 @@ class ApiV1MemberControllerTest {
     @DisplayName("로그인")
     void login() throws Exception {
 
+        String username = "user1";
+        String password = "user11234";
+
+        // 요청
         ResultActions resultActions = mvc
                 .perform(
                         post("/api/v1/members/login")
                                 .content("""
                                         {
-                                            "username": "user1",
-                                            "password": "1234"
+                                            "username": "%s",
+                                            "password": "%s"
                                         }
-                                        """.stripIndent())
+                                        """
+                                        .formatted(username, password)
+                                        .stripIndent())
                                 .contentType(
                                         new MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)
                                 )
                 )
                 .andDo(print());
 
+        Member member = memberService.findByUsername(username).get();
 
+        // 응답. (요청 처리 결과)
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(handler().handlerType(ApiV1MemberController.class))
                 .andExpect(handler().methodName("login"))
                 .andExpect(jsonPath("$.code").value("200-1"))
-                .andExpect(jsonPath("$.msg").value("%s님 환영합니다.".formatted("유저1")))
+                .andExpect(jsonPath("$.msg").value("%s님 환영합니다.".formatted(member.getNickname())))
                 .andExpect(jsonPath("$.data").exists())
-                .andExpect(jsonPath("$.data.id").isNumber())
-                .andExpect(jsonPath("$.data.nickname").value("유저1"))
-                .andExpect(jsonPath("$.data.createdDate").exists())
-                .andExpect(jsonPath("$.data.modifiedDate").exists());
+                .andExpect(jsonPath("$.data.item.id").isNumber())
+                .andExpect(jsonPath("$.data.item.nickname").value(member.getNickname()))
+                .andExpect(jsonPath("$.data.item.createdDate").exists())
+                .andExpect(jsonPath("$.data.item.modifiedDate").exists())
+                .andExpect(jsonPath("$.data.apiKey").exists());
+
 
     }
-
 }

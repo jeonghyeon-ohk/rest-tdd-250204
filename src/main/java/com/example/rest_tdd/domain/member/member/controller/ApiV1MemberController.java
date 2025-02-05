@@ -18,8 +18,7 @@ public class ApiV1MemberController {
 
     private final MemberService memberService;
 
-    record JoinReqBody(String username, String password, String nickname) {
-    }
+    record JoinReqBody(String username, String password, String nickname) {}
 
     @PostMapping("/join")
     public RsData<MemberDto> join(@RequestBody JoinReqBody reqBody) {
@@ -29,24 +28,32 @@ public class ApiV1MemberController {
                     throw new ServiceException("409-1", "이미 사용중인 아이디입니다.");
                 });
 
-        Member member = memberService.join(reqBody.username(), reqBody.password(), reqBody.nickname());
 
+        Member member = memberService.join(reqBody.username(), reqBody.password(), reqBody.nickname());
         return new RsData<>(
                 "201-1",
                 "회원 가입이 완료되었습니다.",
-                new MemberDto(member));
+                new MemberDto(member)
+        );
     }
 
+
     record LoginReqBody(String username, String password) {}
+
+    record LoginResBody(MemberDto item, String apiKey) {}
+
     @PostMapping("/login")
-    public RsData<MemberDto> login(@RequestBody LoginReqBody reqBody) {
+    public RsData<LoginResBody> login(@RequestBody LoginReqBody reqBody) {
 
         Member member = memberService.findByUsername(reqBody.username()).get();
 
         return new RsData<>(
                 "200-1",
-                "%s님 환영합니다.".formatted(member.getUsername()),
-                new MemberDto(member)
+                "%s님 환영합니다.".formatted(member.getNickname()),
+                new LoginResBody(
+                        new MemberDto(member),
+                        member.getApiKey()
+                )
         );
     }
 
