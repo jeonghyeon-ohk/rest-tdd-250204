@@ -18,7 +18,8 @@ public class ApiV1MemberController {
 
     private final MemberService memberService;
 
-    record JoinReqBody(String username, String password, String nickname) {}
+    record JoinReqBody(String username, String password, String nickname) {
+    }
 
     @PostMapping("/join")
     public RsData<MemberDto> join(@RequestBody JoinReqBody reqBody) {
@@ -34,6 +35,19 @@ public class ApiV1MemberController {
                 "201-1",
                 "회원 가입이 완료되었습니다.",
                 new MemberDto(member));
+    }
+
+    record LoginReqBody(String username, String password) {}
+    @PostMapping("/login")
+    public RsData<MemberDto> login(@RequestBody LoginReqBody reqBody) {
+
+        Member member = memberService.findByUsername(reqBody.username()).get();
+
+        return new RsData<>(
+                "200-1",
+                "%s님 환영합니다.".formatted(member.getUsername()),
+                new MemberDto(member)
+        );
     }
 
 

@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Transactional
-class RestTddApplicationTests {
+class ApiV1MemberControllerTest {
 
     @Autowired
     private MockMvc mvc;
