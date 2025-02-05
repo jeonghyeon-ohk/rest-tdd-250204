@@ -61,7 +61,7 @@ public class ApiV1PostControllerTest {
 
         long postId = 1;
 
-        ResultActions resultActions =itemRequest(postId);
+        ResultActions resultActions = itemRequest(postId);
 
         resultActions
                 .andExpect(status().isOk())
@@ -135,5 +135,25 @@ public class ApiV1PostControllerTest {
         checkPost(resultActions, post);
 
     }
+
+    @Test
+    @DisplayName("글 작성2 - no apiKey")
+    void write2() throws Exception {
+
+        String apiKey = "";
+        String title = "새로운 글 제목";
+        String content = "새로운 글 내용";
+
+        ResultActions resultActions = writeRequest(apiKey, title, content);
+
+        resultActions
+                .andExpect(status().isUnauthorized())
+                .andExpect(handler().handlerType(ApiV1PostController.class))
+                .andExpect(handler().methodName("write"))
+                .andExpect(jsonPath("$.code").value("401-1"))
+                .andExpect(jsonPath("$.msg").value("잘못된 인증키입니다."));
+    }
+
+
 
 }
