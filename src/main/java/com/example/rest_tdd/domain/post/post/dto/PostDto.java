@@ -14,7 +14,7 @@ public class PostDto {
     private String title;
     private long authorId;
     private String authorName;
-    private boolean published; // 발행
+    private boolean published;
     private boolean listed;
 
     public PostDto(Post post) {

@@ -12,10 +12,10 @@ public class PostWithContentDto {
     private LocalDateTime createdDate;
     private LocalDateTime modifiedDate;
     private String title;
-    private String content;
     private long authorId;
+    private String content;
     private String authorName;
-    private boolean published; // 발행
+    private boolean published;
     private boolean listed;
 
     public PostWithContentDto(Post post) {

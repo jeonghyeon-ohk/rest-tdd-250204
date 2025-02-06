@@ -35,7 +35,7 @@ public class ApiV1MemberController {
                 "201-1",
                 "회원 가입이 완료되었습니다.",
                 new MemberDto(member)
-        );
+                );
     }
 
 

@@ -57,7 +57,7 @@ public class BaseInitData {
         Member user1 = memberService.findByUsername("user1").get();
         Member user2 = memberService.findByUsername("user2").get();
 
-        Post post1 = postService.write(user1, "축구 하실분 모집합니다.", "저녁 6시까지 모여주세요.",true, true);
+        Post post1 = postService.write(user1, "축구 하실분 모집합니다.", "저녁 6시까지 모여주세요.", true, true);
         post1.addComment(user1, "저 참석하겠습니다.");
         post1.addComment(user2, "공격수 자리 있나요?");
 
