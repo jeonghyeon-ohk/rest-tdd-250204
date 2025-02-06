@@ -5,6 +5,8 @@ import com.example.rest_tdd.domain.post.post.entity.Post;
 import com.example.rest_tdd.domain.post.post.service.PostService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,6 +50,15 @@ public class ApiV1PostControllerTest {
                 .andExpect(jsonPath("$.data.modifiedDate").value(matchesPattern(post.getModifiedDate().toString().replaceAll("0+$", "") + ".*")));
     }
 
+    private ResultActions itemRequest(long postId, String apiKey) throws Exception {
+        return mvc
+                .perform(
+                        get("/api/v1/posts/%d".formatted(postId))
+                                .header("Authorization", "Bearer " + apiKey)
+                )
+                .andDo(print());
+
+    }
 
     @Test
     @DisplayName("글 다건 조회")
@@ -64,7 +75,10 @@ public class ApiV1PostControllerTest {
                 .andExpect(handler().handlerType(ApiV1PostController.class))
                 .andExpect(handler().methodName("getItems"))
                 .andExpect(jsonPath("$.code").value("200-1"))
-                .andExpect(jsonPath("$.msg").value("글 목록 조회가 완료되었습니다."));
+                .andExpect(jsonPath("$.msg").value("글 목록 조회가 완료되었습니다."))
+                .andExpect(jsonPath("$.data.length()").value( 3)) // 한페이지당 보여줄 글 개수
+                .andExpect(jsonPath("$.data.currentPageNo").isNumber()) // 현재 페이지
+                .andExpect(jsonPath("$.data.totalPages").isNumber()); // 전체 페이지 개수
 
         List<Post> posts = postService.getListedItems();
 
@@ -85,17 +99,6 @@ public class ApiV1PostControllerTest {
                     .andExpect(jsonPath("$.data[%d].modifiedDate".formatted(i)).value(matchesPattern(post.getModifiedDate().toString().replaceAll("0+$", "") + ".*")));
         }
 
-
-    }
-
-
-    private ResultActions itemRequest(long postId, String apiKey) throws Exception {
-        return mvc
-                .perform(
-                        get("/api/v1/posts/%d".formatted(postId))
-                                .header("Authorization", "Bearer " + apiKey)
-                )
-                .andDo(print());
 
     }
 
@@ -418,4 +421,6 @@ public class ApiV1PostControllerTest {
                 .andExpect(jsonPath("$.msg").value("자신이 작성한 글만 삭제 가능합니다."));
 
     }
+
+    private static final Logger log = LoggerFactory.getLogger(ApiV1PostControllerTest.class);
 }
