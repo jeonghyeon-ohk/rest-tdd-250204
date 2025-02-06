@@ -42,7 +42,8 @@ public class ApiV1PostController {
 
     record WriteReqBody(@NotBlank String title,
                         @NotBlank String content,
-                        boolean published
+                        boolean published,
+                        boolean listed
                         ) {
     }
 
@@ -50,7 +51,7 @@ public class ApiV1PostController {
     public RsData<PostDto> write(@RequestBody @Valid WriteReqBody reqBody) {
 
         Member actor = rq.getAuthenticatedActor();
-        Post post = postService.write(actor, reqBody.title(), reqBody.content(), reqBody.published());
+        Post post = postService.write(actor, reqBody.title(), reqBody.content(), reqBody.published(), reqBody.listed());
 
         return new RsData<>(
                 "201-1",
