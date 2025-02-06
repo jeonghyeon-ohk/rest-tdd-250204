@@ -2,7 +2,6 @@ package com.example.rest_tdd.domain.post.post.controller;
 
 import com.example.rest_tdd.domain.member.member.entity.Member;
 import com.example.rest_tdd.domain.post.post.dto.PostDto;
-import com.example.rest_tdd.domain.post.post.dto.PostWithContentDto;
 import com.example.rest_tdd.domain.post.post.entity.Post;
 import com.example.rest_tdd.domain.post.post.service.PostService;
 import com.example.rest_tdd.global.Rq;
@@ -23,18 +22,29 @@ public class ApiV1PostController {
     private final PostService postService;
     private final Rq rq;
 
+    record GetItemsResBody(List<PostDto> items, int totalPages, int currentPageNo) {}
+
     @GetMapping
-    public RsData<List<PostDto>> getItems() {
+    public RsData<GetItemsResBody> getItems() {
 
         List<Post> posts = postService.getListedItems();
+
+        List<PostDto> postDtos = posts.stream()
+                .map(PostDto::new)
+                .toList();
+
+        int totalPages = 3;
+        int currentPageNo = 1;
 
         return new RsData<>(
                 "200-1",
                 "글 목록 조회가 완료되었습니다.",
-                posts.stream()
-                        .map(PostDto::new)
-                        .toList()
-        );
+                new GetItemsResBody(
+                        postDtos,
+                        totalPages,
+                        currentPageNo
+                )
+                );
 
     }
 
