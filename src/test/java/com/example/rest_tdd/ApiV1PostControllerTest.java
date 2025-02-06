@@ -1,5 +1,7 @@
 package com.example.rest_tdd;
 
+import com.example.rest_tdd.domain.member.member.entity.Member;
+import com.example.rest_tdd.domain.member.member.service.MemberService;
 import com.example.rest_tdd.domain.post.post.controller.ApiV1PostController;
 import com.example.rest_tdd.domain.post.post.entity.Post;
 import com.example.rest_tdd.domain.post.post.service.PostService;
@@ -33,6 +35,8 @@ public class ApiV1PostControllerTest {
     private MockMvc mvc;
     @Autowired
     private PostService postService;
+    @Autowired
+    private MemberService memberService;
 
     private void checkPost(ResultActions resultActions, Post post) throws Exception {
 
@@ -49,7 +53,9 @@ public class ApiV1PostControllerTest {
                 .andExpect(jsonPath("$.data.modifiedDate").value(matchesPattern(post.getModifiedDate().toString().replaceAll("0+$", "") + ".*")));
     }
 
+
     private void checkPosts(List<Post> posts, ResultActions resultActions) throws Exception {
+
         for(int i = 0; i < posts.size(); i++) {
 
             Post post = posts.get(i);
@@ -66,6 +72,8 @@ public class ApiV1PostControllerTest {
                     .andExpect(jsonPath("$.data.items[%d].createdDate".formatted(i)).value(matchesPattern(post.getCreatedDate().toString().replaceAll("0+$", "") + ".*")))
                     .andExpect(jsonPath("$.data.items[%d].modifiedDate".formatted(i)).value(matchesPattern(post.getModifiedDate().toString().replaceAll("0+$", "") + ".*")));
         }
+
+
     }
 
     @Test
@@ -91,24 +99,7 @@ public class ApiV1PostControllerTest {
 
         Page<Post> postPage = postService.getListedItems(1, 3, "title", "");
         List<Post> posts = postPage.getContent();
-
-        for(int i = 0; i < posts.size(); i++) {
-
-            Post post = posts.get(i);
-
-            resultActions
-                    .andExpect(jsonPath("$.data.items[%d]".formatted(i)).exists())
-                    .andExpect(jsonPath("$.data.items[%d].id".formatted(i)).value(post.getId()))
-                    .andExpect(jsonPath("$.data.items[%d].title".formatted(i)).value(post.getTitle()))
-                    .andExpect(jsonPath("$.data.items[%d].content".formatted(i)).doesNotExist())
-                    .andExpect(jsonPath("$.data.items[%d].authorId".formatted(i)).value(post.getAuthor().getId()))
-                    .andExpect(jsonPath("$.data.items[%d].authorName".formatted(i)).value(post.getAuthor().getNickname()))
-                    .andExpect(jsonPath("$.data.items[%d].published".formatted(i)).value(post.isPublished()))
-                    .andExpect(jsonPath("$.data.items[%d].listed".formatted(i)).value(post.isListed()))
-                    .andExpect(jsonPath("$.data.items[%d].createdDate".formatted(i)).value(matchesPattern(post.getCreatedDate().toString().replaceAll("0+$", "") + ".*")))
-                    .andExpect(jsonPath("$.data.items[%d].modifiedDate".formatted(i)).value(matchesPattern(post.getModifiedDate().toString().replaceAll("0+$", "") + ".*")));
-        }
-
+        checkPosts(posts, resultActions);
 
     }
 
@@ -144,10 +135,11 @@ public class ApiV1PostControllerTest {
         Page<Post> postPage = postService.getListedItems(page, pageSize, keywordType, keyword);
         List<Post> posts = postPage.getContent();
         checkPosts(posts, resultActions);
+
     }
 
     @Test
-    @DisplayName("글 다건 조회 - 검색 - 내용검색")
+    @DisplayName("글 다건 조회 - 검색 - 내용, 페이징이 되어야 함.")
     void items3() throws Exception {
 
         int page = 1;
@@ -178,7 +170,47 @@ public class ApiV1PostControllerTest {
         Page<Post> postPage = postService.getListedItems(page, pageSize, keywordType, keyword);
         List<Post> posts = postPage.getContent();
         checkPosts(posts, resultActions);
+
     }
+
+    @Test
+    @DisplayName("내가 작성한 글 조회 (user1) - 검색, 페이징 되어야 함.")
+    void mines() throws Exception {
+
+        int page = 1;
+        int pageSize = 3;
+        // 검색어, 검색 대상
+        String keywordType = "";
+        String keyword = "";
+        String apiKey = "user1";
+
+        ResultActions resultActions = mvc
+                .perform(
+                        get("/api/v1/posts/mine?page=%d&pageSize=%d&keywordType=%s&keyword=%s"
+                                .formatted(page, pageSize, keywordType, keyword)
+                        )
+                                .header("Authorization", "Bearer " + apiKey)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(handler().handlerType(ApiV1PostController.class))
+                .andExpect(handler().methodName("getMines"))
+                .andExpect(jsonPath("$.code").value("200-1"))
+                .andExpect(jsonPath("$.msg").value("내 글 목록 조회가 완료되었습니다."))
+                .andExpect(jsonPath("$.data.items.length()").value(pageSize)) // 한페이지당 보여줄 글 개수
+                .andExpect(jsonPath("$.data.currentPageNo").value(page)) // 현재 페이지
+                .andExpect(jsonPath("$.data.totalPages").value(2))
+                .andExpect(jsonPath("$.data.totalItems").value(4));
+
+        Member author = memberService.findByApiKey(apiKey).get();
+        Page<Post> postPage = postService.getMines(author, page, pageSize, keywordType, keyword);
+        List<Post> posts = postPage.getContent();
+        checkPosts(posts, resultActions);
+
+    }
+
 
     private ResultActions itemRequest(long postId, String apiKey) throws Exception {
         return mvc
@@ -247,7 +279,6 @@ public class ApiV1PostControllerTest {
                 .andExpect(jsonPath("$.msg").value("비공개 설정된 글입니다."));
 
     }
-
 
     private ResultActions writeRequest(String apiKey, String title, String content) throws Exception {
         return mvc

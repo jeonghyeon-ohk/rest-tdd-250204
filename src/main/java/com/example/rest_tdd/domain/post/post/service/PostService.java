@@ -62,16 +62,29 @@ public class PostService {
         return postRepository.findTopByOrderByIdDesc();
     }
 
-    public Page<Post> getListedItems(int page, int pageSize) {
-        PageRequest pageRequest = PageRequest.of(page - 1, pageSize);
-        return postRepository.findByListed(true, pageRequest);
-    }
-
     public Page<Post> getListedItems(int page, int pageSize, String keywordType, String keyword) {
         PageRequest pageRequest = PageRequest.of(page - 1, pageSize);
 
-        String likeKeyword = "%"+keyword+"%";
+        String likeKeyword = "%" + keyword + "%";
+
+        if(keywordType.equals("content")) {
+            return postRepository.findByListedAndContentLike(true, likeKeyword, pageRequest);
+        }
+
 
         return postRepository.findByListedAndTitleLike(true, likeKeyword, pageRequest);
+    }
+
+    public Page<Post> getMines(Member author, int page, int pageSize, String keywordType, String keyword) {
+
+        PageRequest pageRequest = PageRequest.of(page - 1, pageSize);
+        String likeKeyword = "%" + keyword + "%";
+
+        if(keywordType.equals("content")) {
+            return postRepository.findByAuthorAndContentLike(author, likeKeyword, pageRequest);
+        }
+
+        return postRepository.findByAuthorAndTitleLike(author, likeKeyword, pageRequest);
+
     }
 }
